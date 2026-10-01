@@ -1135,19 +1135,19 @@ try {
         $restante = ($finProgramado - (Get-Date)).TotalSeconds
         $totalSegundos = $DuracionMinutos * 60
         $transcurrido = [Math]::Max(0, $totalSegundos - $restante)
-        $porcentaje = [Math]::Min(99, [Math]::Floor(($transcurrido / $totalSegundos) * 100))
+        $porcentaje = [Math]::Min(100, [Math]::Floor(($transcurrido / $totalSegundos) * 100))
         $tiempoRestante = [TimeSpan]::FromSeconds([Math]::Max(0, [Math]::Ceiling($restante)))
-
-        Write-Progress -Activity 'Auditoría de tráfico' `
-            -Status ("Muestra {0} | Restante: {1} | Q/Esc para detener" -f `
-                $numeroMuestra, $tiempoRestante.ToString('mm\:ss')) `
-            -CurrentOperation 'Recopilando conexiones, procesos y rendimiento' `
-            -PercentComplete $porcentaje
+        $anchoBarra = 30
+        $caracteresLlenos = [int][Math]::Floor(($porcentaje / 100) * $anchoBarra)
+        $barra = ('#' * $caracteresLlenos).PadRight($anchoBarra, '-')
+        $estadoProgreso = "`r  Muestreo de red: [{0}] {1,3}% | Muestra {2} | Restante {3} | Q/Esc detiene   " -f `
+            $barra, $porcentaje, $numeroMuestra, $tiempoRestante.ToString('mm\:ss')
+        Write-Host $estadoProgreso -NoNewline -ForegroundColor Cyan
 
         if ([System.Console]::KeyAvailable) {
             $teclaInfo = [System.Console]::ReadKey($true)
             if ($teclaInfo.Key -eq 'Q' -or $teclaInfo.Key -eq 'Escape') {
-                Write-Progress -Activity 'Auditoría de tráfico' -Completed
+                Write-Host ''
                 Write-Warn 'Muestreo detenido. Se generará el informe con las muestras obtenidas.'
                 break
             }
@@ -1157,7 +1157,7 @@ try {
             Start-Sleep -Seconds ([Math]::Min($IntervaloSegundos, [Math]::Ceiling($restante)))
         }
     }
-    Write-Progress -Activity 'Auditoría de tráfico' -Completed
+    Write-Host ''
 }
 finally {
     if ($pktmonActivo) {
