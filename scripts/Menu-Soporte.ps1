@@ -124,7 +124,7 @@ $opciones = [ordered]@{
     '9'  = @{ Icon = '[9]'; Label = 'Auditoria de red'; Desc = '(Muestreo de conexiones y trafico TCP)'; Params = @{ Modo = 'Red'; AutoEliminarAlCerrar = $true } }
     '10' = @{ Icon = '[10]'; Label = 'Comparar auditorias'; Desc = '(Procesos, puertos, servicios y DNS)'; Params = $null }
     '11' = @{ Icon = '[11]'; Label = 'Estado de licencias'; Desc = '(Consulta licencias de Windows y productos Microsoft)'; Params = @{ MostrarLicencias = $true; AutoEliminarAlCerrar = $true } }
-    '12' = @{ Icon = '[12]'; Label = 'Rendimiento de Windows'; Desc = '(Inicio, memoria, discos y almacenamiento; solo lectura)'; Params = @{ Modo = 'Rapido'; DuracionMinutos = 5; AutoEliminarAlCerrar = $true } }
+    '12' = @{ Icon = '[12]'; Label = 'Rendimiento de Windows'; Desc = '(Informe persistente: inicio, memoria, discos y almacenamiento)'; Params = @{ Modo = 'Rapido'; DuracionMinutos = 5 } }
 }
 
 $categorias = [ordered]@{

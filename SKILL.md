@@ -103,8 +103,9 @@ Extra switches available on `Auditar-Trafico.ps1`:
   a summary and HTML report.
 - Menu option `12`, `Rendimiento de Windows`: runs the quick diagnostic and
   reports startup entries, high-memory processes, free storage, published disk
-  health, last boot time, and active power plan. It is read-only; recommendations
-  do not disable startup entries or services or change the power plan.
+  health, last boot time, and active power plan. It is read-only, stores its
+  report persistently under `C:\AuditoriaRed`, and recommendations do not
+  disable startup entries or services or change the power plan.
 - `-AutoEliminarAlCerrar`: writes evidence to `%TEMP%` instead of
   `C:\AuditoriaRed`, opens the HTML report automatically, and deletes the
   temporary evidence folder only after the user presses a key to exit.
