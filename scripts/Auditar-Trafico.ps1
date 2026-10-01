@@ -986,7 +986,6 @@ try {
         $numeroMuestra++
         $fechaMuestra = Get-Date
         $procesos = @{}
-        Write-Etapa "Capturando muestra de red y rendimiento #$numeroMuestra..."
 
         Get-Process -ErrorAction SilentlyContinue | ForEach-Object {
             $procesos[[int]$_.Id] = $_.ProcessName
@@ -1139,15 +1138,17 @@ try {
         $porcentaje = [Math]::Min(99, [Math]::Floor(($transcurrido / $totalSegundos) * 100))
         $tiempoRestante = [TimeSpan]::FromSeconds([Math]::Max(0, [Math]::Ceiling($restante)))
 
-        $colorProgreso = if ($porcentaje -lt 34) { 'Red' } elseif ($porcentaje -lt 67) { 'Yellow' } else { 'Green' }
-        $statusStr = "`r  Progreso: {0,3}%  |  Muestra {1,-4}  |  Restante: {2}  |  Presione 'Q' para detener   " -f `
-            $porcentaje, $numeroMuestra, $tiempoRestante.ToString('mm\:ss')
-        Write-Host $statusStr -NoNewline -ForegroundColor $colorProgreso
+        Write-Progress -Activity 'Auditoría de tráfico' `
+            -Status ("Muestra {0} | Restante: {1} | Q/Esc para detener" -f `
+                $numeroMuestra, $tiempoRestante.ToString('mm\:ss')) `
+            -CurrentOperation 'Recopilando conexiones, procesos y rendimiento' `
+            -PercentComplete $porcentaje
 
         if ([System.Console]::KeyAvailable) {
             $teclaInfo = [System.Console]::ReadKey($true)
             if ($teclaInfo.Key -eq 'Q' -or $teclaInfo.Key -eq 'Escape') {
-                Write-Host "`r`n`n[!] Muestreo detenido por el usuario. Generando informe con las muestras obtenidas..." -ForegroundColor Yellow
+                Write-Progress -Activity 'Auditoría de tráfico' -Completed
+                Write-Warn 'Muestreo detenido. Se generará el informe con las muestras obtenidas.'
                 break
             }
         }
@@ -1156,7 +1157,7 @@ try {
             Start-Sleep -Seconds ([Math]::Min($IntervaloSegundos, [Math]::Ceiling($restante)))
         }
     }
-    Write-Host ''
+    Write-Progress -Activity 'Auditoría de tráfico' -Completed
 }
 finally {
     if ($pktmonActivo) {

@@ -102,47 +102,24 @@ function Install-OfficeToolkit {
     Write-Ok 'Instalacion de Office finalizada correctamente.'
 }
 
-function Invoke-Activator {
-    Write-Info 'Descargando y ejecutando Microsoft Activation Scripts (MAS)...'
-    Write-Warn 'Asegurese de tener conexion a Internet.'
-    Write-Host ''
-    
-    if (-not (Test-Pregunta 'Desea continuar con la activacion?')) {
-        Write-Warn 'Activacion cancelada.'
-        return
-    }
-    
-    try {
-        # Ejecutar el comando de activacion
-        $comando = 'irm https://get.activated.win | iex'
-        Write-Info 'Ejecutando: irm https://get.activated.win | iex'
-        Write-Host ''
-        
-        # Usar Invoke-Expression para ejecutar el comando
-        Invoke-Expression -Command $comando
-        
-        Write-Host ''
-        Write-Ok 'Script de activacion ejecutado correctamente.'
-        Write-Info 'Revise la ventana anterior para ver los resultados.'
-    }
-    catch {
-        throw "Error al ejecutar el script de activacion: $($_.Exception.Message)"
-    }
+$opciones = [ordered]@{
+    '1'  = @{ Icon = '[1]'; Label = 'Revision preventiva rapida'; Desc = '(5 min - Estado general, red basica y hardware)'; Params = @{ Modo = 'Rapido'; AutoEliminarAlCerrar = $true } }
+    '2'  = @{ Icon = '[2]'; Label = 'Limpieza segura'; Desc = '(Temporales y cache antigua; conserva documentos)'; Params = @{ Modo = 'Limpieza'; AutoEliminarAlCerrar = $true } }
+    '3'  = @{ Icon = '[3]'; Label = 'Actualizar Windows'; Desc = '(Instala actualizaciones; puede reiniciar el equipo)'; Params = @{ ActualizarWindows = $true; AutoEliminarAlCerrar = $true } }
+    '4'  = @{ Icon = '[4]'; Label = 'Optimizar unidades'; Desc = '(Windows elige la optimizacion apropiada por unidad)'; Params = @{ DesfragmentarDiscos = $true; AutoEliminarAlCerrar = $true } }
+    '5'  = @{ Icon = '[5]'; Label = 'Reparar Windows'; Desc = '(Diagnostico completo y verificacion DISM/SFC)'; Params = @{ Modo = 'Completo'; IncluirVerificacionSistema = $true; AutoEliminarAlCerrar = $true } }
+    '6'  = @{ Icon = '[6]'; Label = 'Reparar cola de impresion'; Desc = '(Elimina trabajos atascados y reinicia Spooler)'; Params = @{ LimpiarColaImpresion = $true; AutoEliminarAlCerrar = $true } }
+    '7'  = @{ Icon = '[7]'; Label = 'Instalar Office'; Desc = '(Instalador incluido en la carpeta office)'; Params = $null }
+    '8'  = @{ Icon = '[8]'; Label = 'Auditoria completa'; Desc = '(Seguridad, hardware, eventos, servicios y software)'; Params = @{ Modo = 'Completo'; AutoEliminarAlCerrar = $true } }
+    '9'  = @{ Icon = '[9]'; Label = 'Auditoria de red'; Desc = '(Muestreo de conexiones y trafico TCP)'; Params = @{ Modo = 'Red'; AutoEliminarAlCerrar = $true } }
+    '10' = @{ Icon = '[10]'; Label = 'Comparar auditorias'; Desc = '(Procesos, puertos, servicios y DNS)'; Params = $null }
+    '11' = @{ Icon = '[11]'; Label = 'Estado de licencias'; Desc = '(Consulta licencias de Windows y productos Microsoft)'; Params = @{ MostrarLicencias = $true; AutoEliminarAlCerrar = $true } }
 }
 
-$opciones = [ordered]@{
-    '1' = @{ Icon = '[R]'; Label = 'Diagnostico Rapido'; Desc = '(5 min - Estado general, red basica y hardware)'; Params = @{ Modo = 'Rapido'; AutoEliminarAlCerrar = $true } }
-    '2' = @{ Icon = '[C]'; Label = 'Diagnostico Completo'; Desc = '(Extenso - SMART, parches, DISM/SFC, eventos)'; Params = @{ Modo = 'Completo'; IncluirVerificacionSistema = $true; AutoEliminarAlCerrar = $true } }
-    '3' = @{ Icon = '[N]'; Label = 'Auditoria de Red'; Desc = '(30 min - Muestreo de conexiones y trafico TCP/ETL)'; Params = @{ Modo = 'Red'; AutoEliminarAlCerrar = $true } }
-    '4' = @{ Icon = '[L]'; Label = 'Limpieza de Temporales'; Desc = '(Libera espacio en discos de cache antiguos)'; Params = @{ Modo = 'Limpieza'; AutoEliminarAlCerrar = $true } }
-    '5' = @{ Icon = '[P]'; Label = 'Liberar Cola Impresion'; Desc = '(Solo: cancela trabajos atascados y reinicia Spooler)'; Params = @{ LimpiarColaImpresion = $true; AutoEliminarAlCerrar = $true } }
-    '6' = @{ Icon = '[O]'; Label = 'Optimizacion Rapida'; Desc = '(Papelera, cache DNS/iconos y limpieza de WinSxS)'; Params = @{ OptimizarSistema = $true; AutoEliminarAlCerrar = $true } }
-    '7' = @{ Icon = '[U]'; Label = 'Actualizar Windows'; Desc = '(Busca, instala y puede reiniciar el equipo)'; Params = @{ ActualizarWindows = $true; AutoEliminarAlCerrar = $true } }
-    '8' = @{ Icon = '[D]'; Label = 'Desfragmentar Discos'; Desc = '(Optimiza las unidades fijas detectadas)'; Params = @{ DesfragmentarDiscos = $true; AutoEliminarAlCerrar = $true } }
-    '9' = @{ Icon = '[L]'; Label = 'Licencias'; Desc = '(Consulta activacion oficial de Windows y Microsoft)'; Params = @{ MostrarLicencias = $true; AutoEliminarAlCerrar = $true } }
-    '10' = @{ Icon = '[B]'; Label = 'Comparar Auditoria'; Desc = '(Compara red, puertos, servicios y DNS con otra auditoria)'; Params = $null }
-    '11' = @{ Icon = '[F]'; Label = 'Instalar Office'; Desc = '(Usa el instalador incluido en la carpeta office)'; Params = $null }
-    '12' = @{ Icon = '[A]'; Label = 'Activar Windows/Office'; Desc = '(Ejecuta Microsoft Activation Scripts - MAS)'; Params = $null }
+$categorias = [ordered]@{
+    'MANTENIMIENTO PREVENTIVO' = @('1', '2', '3', '4')
+    'MANTENIMIENTO CORRECTIVO' = @('5', '6', '7')
+    'AUDITORIA Y REVISION' = @('8', '9', '10', '11')
 }
 
 while ($true) {
@@ -157,12 +134,16 @@ while ($true) {
     $colLabel = 'White'
     $colDesc = 'Gray'
 
-    foreach ($k in $opciones.Keys) {
-        $item = $opciones[$k]
-        Write-Host ('  {0}.  ' -f $k) -NoNewline -ForegroundColor $colNum
-        Write-Host ('{0}  ' -f $item.Icon) -NoNewline -ForegroundColor $colIcon
-        Write-Host ('{0,-24}' -f $item.Label) -NoNewline -ForegroundColor $colLabel
-        Write-Host $item.Desc -ForegroundColor $colDesc
+    foreach ($categoria in $categorias.Keys) {
+        Write-Host "  $categoria" -ForegroundColor DarkCyan
+        foreach ($k in $categorias[$categoria]) {
+            $item = $opciones[$k]
+            Write-Host ('  {0}.  ' -f $k) -NoNewline -ForegroundColor $colNum
+            Write-Host ('{0}  ' -f $item.Icon) -NoNewline -ForegroundColor $colIcon
+            Write-Host ('{0,-29}' -f $item.Label) -NoNewline -ForegroundColor $colLabel
+            Write-Host $item.Desc -ForegroundColor $colDesc
+        }
+        Write-Host ''
     }
 
     Write-Host ''
@@ -171,8 +152,8 @@ while ($true) {
     Write-Host 'Salir del Menu' -ForegroundColor $colLabel
     Write-Linea -c '-' -col DarkCyan
     Write-Host ''
-    Write-Info 'Al finalizar, el informe HTML se abrira automaticamente en su navegador.'
-    Write-Info 'Los archivos de evidencias creados se eliminaran al presionar una tecla.'
+    Write-Info 'Los procesos muestran una confirmacion antes de ejecutarse.'
+    Write-Info 'Las evidencias temporales se eliminan al confirmar la salida de cada proceso.'
     Write-Host ''
 
     Write-Host '  Seleccione una opcion: ' -NoNewline -ForegroundColor Cyan
@@ -230,11 +211,8 @@ while ($true) {
         Write-Host ''
 
         try {
-            if ($opc -eq '11') {
+            if ($opc -eq '7') {
                 Install-OfficeToolkit
-            }
-            elseif ($opc -eq '12') {
-                Invoke-Activator
             }
             else {
                 $paramsSplat = $sel.Params
@@ -263,7 +241,7 @@ while ($true) {
     }
     else {
         Write-Host ''
-        Write-Warn ('"{0}" no es una opcion valida. Ingrese un numero del 1 al 12, o 0 para salir.' -f $opc)
+        Write-Warn ('"{0}" no es una opcion valida. Ingrese un numero del 1 al 11, o 0 para salir.' -f $opc)
         Write-Pausar
     }
 }
