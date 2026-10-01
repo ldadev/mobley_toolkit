@@ -97,7 +97,14 @@ Extra switches available on `Auditar-Trafico.ps1`:
 - `-Modo Limpieza`: the professional cleanup workflow for the end user. It
   targets temporary directories, old Chrome cache subfolders, the DNS cache,
   and the Recycle Bin, while intentionally preserving the user profile,
-  documents, and downloads. It then exports a summary and HTML report.
+  documents, and downloads. It detects broken shortcuts in Desktop and Start
+  Menu locations and asks before removing only the shortcuts whose file target
+  is missing. It does not automatically delete registry keys. It then exports
+  a summary and HTML report.
+- Menu option `12`, `Rendimiento de Windows`: runs the quick diagnostic and
+  reports startup entries, high-memory processes, free storage, published disk
+  health, last boot time, and active power plan. It is read-only; recommendations
+  do not disable startup entries or services or change the power plan.
 - `-AutoEliminarAlCerrar`: writes evidence to `%TEMP%` instead of
   `C:\AuditoriaRed`, opens the HTML report automatically, and deletes the
   temporary evidence folder only after the user presses a key to exit.
@@ -253,4 +260,3 @@ When changing any bundled operational file:
 3. Validate PowerShell syntax.
 4. Confirm that the direct download returns the expected file rather than an
    HTML login or confirmation page.
-

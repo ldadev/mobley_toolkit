@@ -551,6 +551,47 @@ function Limpiar-PC-Profesional {
     return $resultados.ToArray()
 }
 
+function Revisar-AccesosDirectosRotos {
+    $rutas = @(
+        (Join-Path $env:USERPROFILE 'Desktop'),
+        (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'),
+        (Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs'),
+        (Join-Path $env:PUBLIC 'Desktop')
+    ) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Container) } | Select-Object -Unique
+    $shell = New-Object -ComObject WScript.Shell
+    $hallazgos = New-Object 'System.Collections.Generic.List[object]'
+    foreach ($raiz in $rutas) {
+        Get-ChildItem -LiteralPath $raiz -Filter '*.lnk' -File -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
+            try {
+                $acceso = $shell.CreateShortcut($_.FullName)
+                $destino = [Environment]::ExpandEnvironmentVariables([string]$acceso.TargetPath)
+                if (-not [string]::IsNullOrWhiteSpace($destino) -and $destino -match '^[A-Za-z]:\\' -and -not (Test-Path -LiteralPath $destino)) {
+                    $hallazgos.Add([pscustomobject]@{ AccesoDirecto = $_.FullName; Destino = $destino; Estado = 'Destino no encontrado'; Eliminado = $false })
+                }
+            }
+            catch {}
+        }
+    }
+    if ($hallazgos.Count -gt 0) {
+        Write-Host "`nAccesos directos cuyo destino no existe:" -ForegroundColor Yellow
+        $hallazgos | ForEach-Object { Write-Host "  $($_.AccesoDirecto) -> $($_.Destino)" -ForegroundColor Gray }
+        $confirmacion = Read-Host 'Escriba SI para eliminar únicamente estos accesos directos (Enter para conservarlos)'
+        if ($confirmacion -ceq 'SI') {
+            foreach ($hallazgo in $hallazgos) {
+                try {
+                    Remove-Item -LiteralPath $hallazgo.AccesoDirecto -Force -ErrorAction Stop
+                    $hallazgo.Eliminado = $true
+                }
+                catch { $hallazgo.Estado = "No se pudo eliminar: $($_.Exception.Message)" }
+            }
+        }
+        else {
+            foreach ($hallazgo in $hallazgos) { $hallazgo.Estado = 'Conservado; requiere revisión' }
+        }
+    }
+    return $hallazgos.ToArray()
+}
+
 if (-not (Test-Administrador)) {
     throw 'Ejecute PowerShell como administrador para recopilar toda la evidencia.'
 }
@@ -725,6 +766,9 @@ if ([string]::IsNullOrWhiteSpace($AuditoriaAnterior) -and -not $AutoEliminarAlCe
 if ($Modo -eq 'Limpieza') {
     Write-Etapa 'Buscando archivos temporales, cachés y elementos de ruido del equipo...'
     $resultadoLimpieza = @(Limpiar-PC-Profesional -DiasAntiguo $DiasTemporalAntiguo)
+    Write-Etapa 'Revisando accesos directos del Escritorio y menú Inicio...'
+    $accesosDirectosRotos = @(Revisar-AccesosDirectosRotos)
+    $accesosDirectosRotos | Export-Csv (Join-Path $carpeta 'accesos-directos-rotos.csv') -NoTypeInformation -Encoding UTF8
 
     $limpiezaDetallada = @($resultadoLimpieza | Where-Object { $_.Categoria -ne 'DNS' -and $_.Categoria -ne 'Reciclaje' })
     $estadoAntes = @($limpiezaDetallada | ForEach-Object {
@@ -787,6 +831,8 @@ th { background: #e2e8f0; }
         (Convertir-FragmentoHtml $resumenLimpieza 'Resultado')
         (Convertir-FragmentoHtml $estadoAntes 'Acciones realizadas por ruta')
         (Convertir-FragmentoHtml $resultadoLimpiezaCsv 'Detalle completo de limpieza')
+        (Convertir-FragmentoHtml $accesosDirectosRotos 'Accesos directos con destino inexistente' 'No se encontraron accesos directos rotos.')
+        '<p class="nota"><strong>Registro de Windows:</strong> esta limpieza no elimina claves automáticamente. Los llamados limpiadores del Registro pueden quitar configuraciones válidas y no suelen aportar una mejora de rendimiento demostrable. Para cambios de Registro, use una revisión específica y respaldo previo.</p>'
     ) -join "`r`n"
 
     $archivoInformeLimpieza = Join-Path $carpeta 'informe-de-soporte.html'
@@ -1751,11 +1797,20 @@ catch {
 }
 
 $inicioWindows = @()
+$diagnosticoRendimiento = @()
 try {
     $inicioWindows = @(Get-CimInstance Win32_StartupCommand |
         Select-Object Name, Command, Location, User)
     $inicioWindows |
         Export-Csv (Join-Path $carpeta 'programas-inicio.csv') -NoTypeInformation -Encoding UTF8
+    $ultimoArranque = (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
+    $planEnergia = (& powercfg.exe /getactivescheme 2>$null | Out-String).Trim()
+    $diagnosticoRendimiento = @(
+        [pscustomobject]@{ Indicador = 'Último inicio de Windows'; Valor = $ultimoArranque; Interpretacion = 'Referencia temporal del último arranque; no equivale al tiempo de inicio.' }
+        [pscustomobject]@{ Indicador = 'Programas configurados al inicio'; Valor = $inicioWindows.Count; Interpretacion = 'Revisar editor, ruta y necesidad antes de desactivar entradas.' }
+        [pscustomobject]@{ Indicador = 'Plan de energía activo'; Valor = $planEnergia; Interpretacion = 'El plan puede afectar rendimiento y consumo; confirmar las necesidades del equipo antes de cambiarlo.' }
+    )
+    $diagnosticoRendimiento | Export-Csv (Join-Path $carpeta 'diagnostico-rendimiento.csv') -NoTypeInformation -Encoding UTF8
 }
 catch {
     Registrar-ErrorAuditoria 'Programas de inicio' $_.Exception.Message
@@ -2845,6 +2900,10 @@ if ($indicadores.Count -gt 0) { $recomendacionesEjecutivas.Add('Validar cada ind
 if ($cantidadEventosVisor -gt 0 -or $cantidadFallosAplicacion -gt 0) { $recomendacionesEjecutivas.Add('Correlacionar los eventos repetidos con la hora del síntoma y confirmar su origen en el Visor de eventos.') }
 if ($cantidadServiciosDetenidos -gt 0) { $recomendacionesEjecutivas.Add('Comprobar dependencias, ruta, firma y política de los servicios automáticos detenidos.') }
 if ($cantidadErroresRed -gt 0) { $recomendacionesEjecutivas.Add('Resolver las limitaciones de recopilación antes de considerar completa la conclusión de red.') }
+if (@($volumenes | Where-Object { $_.PorcentajeLibre -lt 15 }).Count -gt 0) { $recomendacionesEjecutivas.Add('Revisar los volúmenes con menos de 15 % de espacio libre; identificar archivos grandes antes de eliminarlos.') }
+if (@($discosFisicos | Where-Object { [string]$_.HealthStatus -ne 'Healthy' }).Count -gt 0) { $recomendacionesEjecutivas.Add('Priorizar respaldo y diagnóstico del disco que no reporta estado Healthy; los datos de salud dependen de lo que publique el dispositivo.') }
+if ($inicioWindows.Count -gt 10) { $recomendacionesEjecutivas.Add('Revisar los programas de inicio y desactivar únicamente los que el usuario reconozca y no necesite al arrancar.') }
+if (@($procesosConsumo | Select-Object -First 5).Count -gt 0) { $recomendacionesEjecutivas.Add('Consultar los cinco procesos que más memoria usan y correlacionarlos con el síntoma; el uso alto aislado no implica una falla.') }
 if ($recomendacionesEjecutivas.Count -eq 0) { $recomendacionesEjecutivas.Add('No se requieren acciones urgentes; conservar el informe como línea base y repetir la captura si el síntoma continúa.') }
 $resumenEjecutivo = @(
     "<h2>Resumen ejecutivo</h2><p class='estado'><strong>Estado general:</strong> $estadoEjecutivo</p>"
@@ -2917,6 +2976,7 @@ $contenido = @(
     (Convertir-FragmentoHtml @($actualizaciones | Select-Object -First 30) 'Actualizaciones instaladas recientemente')
     (Convertir-FragmentoHtml @($actualizacionesPendientes) 'Actualizaciones pendientes' 'No se encontraron actualizaciones pendientes o el modo seleccionado no realiza esta búsqueda.')
     (Convertir-FragmentoHtml @($resumenRendimiento) 'Resumen de rendimiento')
+    (Convertir-FragmentoHtml @($diagnosticoRendimiento) 'Diagnóstico de inicio y energía')
     (Convertir-FragmentoHtml @($procesosConsumo) 'Procesos con mayor consumo de memoria')
     (Convertir-FragmentoHtml @($volcadosSistema) 'Volcados de fallos recientes' 'No se encontraron volcados recientes.')
     (Convertir-FragmentoHtml @($eventosAplicaciones | Select-Object -First 100) 'Fallos recientes de aplicaciones' 'No se encontraron eventos recientes de fallos de aplicaciones.')

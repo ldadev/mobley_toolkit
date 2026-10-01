@@ -114,7 +114,7 @@ function Install-OfficeToolkit {
 
 $opciones = [ordered]@{
     '1'  = @{ Icon = '[1]'; Label = 'Revision preventiva rapida'; Desc = '(5 min - Estado general, red basica y hardware)'; Params = @{ Modo = 'Rapido'; AutoEliminarAlCerrar = $true } }
-    '2'  = @{ Icon = '[2]'; Label = 'Limpieza segura'; Desc = '(Temporales y cache antigua; conserva documentos)'; Params = @{ Modo = 'Limpieza'; AutoEliminarAlCerrar = $true } }
+    '2'  = @{ Icon = '[2]'; Label = 'Limpieza segura'; Desc = '(Temporales, cache y accesos directos rotos; confirma antes de borrar)'; Params = @{ Modo = 'Limpieza'; AutoEliminarAlCerrar = $true } }
     '3'  = @{ Icon = '[3]'; Label = 'Actualizar Windows'; Desc = '(Instala actualizaciones; puede reiniciar el equipo)'; Params = @{ ActualizarWindows = $true; AutoEliminarAlCerrar = $true } }
     '4'  = @{ Icon = '[4]'; Label = 'Optimizar unidades'; Desc = '(Windows elige la optimizacion apropiada por unidad)'; Params = @{ DesfragmentarDiscos = $true; AutoEliminarAlCerrar = $true } }
     '5'  = @{ Icon = '[5]'; Label = 'Reparar Windows'; Desc = '(Diagnostico completo y verificacion DISM/SFC)'; Params = @{ Modo = 'Completo'; IncluirVerificacionSistema = $true; AutoEliminarAlCerrar = $true } }
@@ -124,10 +124,11 @@ $opciones = [ordered]@{
     '9'  = @{ Icon = '[9]'; Label = 'Auditoria de red'; Desc = '(Muestreo de conexiones y trafico TCP)'; Params = @{ Modo = 'Red'; AutoEliminarAlCerrar = $true } }
     '10' = @{ Icon = '[10]'; Label = 'Comparar auditorias'; Desc = '(Procesos, puertos, servicios y DNS)'; Params = $null }
     '11' = @{ Icon = '[11]'; Label = 'Estado de licencias'; Desc = '(Consulta licencias de Windows y productos Microsoft)'; Params = @{ MostrarLicencias = $true; AutoEliminarAlCerrar = $true } }
+    '12' = @{ Icon = '[12]'; Label = 'Rendimiento de Windows'; Desc = '(Inicio, memoria, discos y almacenamiento; solo lectura)'; Params = @{ Modo = 'Rapido'; DuracionMinutos = 5; AutoEliminarAlCerrar = $true } }
 }
 
 $categorias = [ordered]@{
-    'MANTENIMIENTO PREVENTIVO' = @('1', '2', '3', '4')
+    'MANTENIMIENTO PREVENTIVO' = @('1', '2', '3', '4', '12')
     'MANTENIMIENTO CORRECTIVO' = @('5', '6', '7')
     'AUDITORIA Y REVISION' = @('8', '9', '10', '11')
 }

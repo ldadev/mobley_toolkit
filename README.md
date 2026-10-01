@@ -95,7 +95,9 @@ archivos.
 | `Rapido` | Diagnóstico general en aproximadamente cinco minutos. |
 | `Completo` | Revisión extendida de seguridad, hardware, eventos, actualizaciones y software. |
 | `Red` | Muestreo de tráfico, DNS, puerta de enlace, adaptadores y procesos. |
-| `Limpieza` | Limpieza de temporales, caché de Chrome, DNS y Papelera de reciclaje. |
+| `Limpieza` | Limpieza de temporales, caché de Chrome, DNS y Papelera; detecta accesos directos rotos y solicita confirmación antes de quitarlos. |
+
+La opción **Rendimiento de Windows** del menú hace una revisión rápida de solo lectura. El informe incluye programas configurados al inicio, procesos con mayor uso de memoria, espacio disponible, estado de discos publicado por Windows, último arranque y plan de energía. Las recomendaciones no desactivan programas ni servicios ni cambian el plan de energía.
 
 Acciones independientes disponibles en `Auditar-Trafico.ps1`:
 
