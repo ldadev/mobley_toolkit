@@ -176,6 +176,16 @@ contiene el procedimiento de recuperación del arranque de Windows mediante
 WinRE, partición EFI y comandos `bcdboot`. Debe utilizarse con respaldo y
 confirmando primero las letras de unidad del equipo afectado.
 
+En el menú, **Reparación de arranque** ofrece un triaje para equipo sin energía,
+falla antes de completar POST, Windows que no inicia después del logo, o equipo
+con imagen negra. Presenta revisiones iniciales no invasivas y abre la guía
+oficial Dell/HP correspondiente. La guía UEFI se reserva para equipos que sí
+encienden y completan POST, pero no cargan Windows. La opción de ficha guarda
+marca, modelo, síntoma, patrón y resultado localmente en
+`C:\AuditoriaRed\CasosArranque` (no ingrese números de serie). Los códigos de
+luces y pitidos dependen del modelo y orientan el diagnóstico; no confirman por
+sí solos una avería de CPU ni la reparan desde Windows.
+
 ## Documentación adicional
 
 - [Guía de uso](references/USAGE.md)

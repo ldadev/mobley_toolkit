@@ -112,6 +112,89 @@ function Install-OfficeToolkit {
     Write-Ok 'Instalacion de Office finalizada correctamente.'
 }
 
+function Show-StartupRepairSubmenu {
+    while ($true) {
+        Clear-Host
+        Write-Titulo 'TRIAJE: EQUIPO NO ENCIENDE O NO INICIA' -col Cyan
+        Write-Host '  1. No enciende (sin luces, ventilador ni sonido)'
+        Write-Host '  2. Enciende, pero no completa POST (luces o pitidos)'
+        Write-Host '  3. Pasa el logo, pero Windows no inicia (POST completado)'
+        Write-Host '  4. Enciende, pero no hay imagen'
+        Write-Host '  5. Registrar el caso en una ficha local'
+        Write-Host '  0. Volver al menu principal'
+        Write-Host ''
+        $seleccion = (Read-Host 'Seleccione una opcion').Trim()
+        if ($seleccion -eq '0') { return }
+
+        $destino = $null
+        switch ($seleccion) {
+            '1' {
+                Write-Host ''
+                Write-Warn 'Revise la toma con otro dispositivo, el cable/cargador y sus indicadores. Desconecte perifericos USB no esenciales. Siga el procedimiento de descarga electrica indicado por el fabricante y modelo; no abra el equipo.'
+                $fabricante = (Read-Host 'Fabricante (Dell/HP)').Trim().ToLowerInvariant()
+                if ($fabricante -eq 'hp') { $destino = 'https://support.hp.com/au-en/document/ish_3974055-3873564-16' }
+                else { $destino = 'https://www.dell.com/support/contents/en-us/article/product-support/self-support-knowledgebase/fix-common-issues/no-power' }
+            }
+            '2' {
+                Write-Host ''
+                Write-Warn 'Anote el modelo exacto, el color y la secuencia repetida de luces o pitidos. No interprete un patron con una guia de otro modelo ni retire componentes.'
+                $fabricante = (Read-Host 'Fabricante (Dell/HP)').Trim().ToLowerInvariant()
+                if ($fabricante -eq 'hp') {
+                    $tipoHp = (Read-Host 'Tipo de equipo (escritorio/notebook)').Trim().ToLowerInvariant()
+                    if ($tipoHp -eq 'notebook') { $destino = 'https://support.hp.com/in-en/document/ish_1997719-1528356-16' }
+                    else { $destino = 'https://support.hp.com/us-en/document/ish_1997210-1528385-16' }
+                }
+                else { $destino = 'https://www.dell.com/support/kbdoc/en-us/000125609/resolve-no-power-no-post-no-boot-or-no-video-issues-with-your-dell-computer' }
+                Write-Info 'Si el patron apunta a CPU, placa o memoria, es un indicio de hardware y requiere el diagnostico del fabricante o servicio tecnico.'
+            }
+            '3' {
+                Write-Host ''
+                Write-Warn 'Esta opcion es solo para un equipo que enciende y completa POST, pero no carga Windows. Antes de usar comandos UEFI, respalde los datos si es posible y confirme las letras de unidad desde WinRE.'
+                foreach ($raiz in @($PSScriptRoot, (Split-Path -Parent $PSScriptRoot))) {
+                    $candidato = Join-Path $raiz 'Comandos_Paso_a_Paso_Reparacion_Arranque_UEFI.pdf'
+                    if (Test-Path -LiteralPath $candidato -PathType Leaf) { $destino = $candidato; break }
+                }
+                if (-not $destino) { Write-Warn 'No se encontro la guia PDF local. Use la version completa del toolkit.' }
+            }
+            '4' {
+                Write-Host ''
+                Write-Warn 'Confirme que el monitor tenga energia, este encendido y use la entrada correcta. En un escritorio, revise el cable de video y pruebe otra pantalla/cable si estan disponibles. No ejecute reparaciones UEFI por falta de imagen.'
+                $fabricante = (Read-Host 'Fabricante (Dell/HP)').Trim().ToLowerInvariant()
+                if ($fabricante -eq 'hp') { $destino = 'https://support.hp.com/au-en/document/ish_3974055-3873564-16' }
+                else { $destino = 'https://www.dell.com/support/kbdoc/en-us/000125609/resolve-no-power-no-post-no-boot-or-no-video-issues-with-your-dell-computer' }
+            }
+            '5' {
+                $marcaCaso = Read-Host 'Fabricante'
+                $modeloCaso = Read-Host 'Modelo exacto (no ingrese numero de serie)'
+                $sintomaCaso = Read-Host 'Sintoma (sin energia / no POST / no inicia Windows / sin imagen)'
+                $codigoCaso = Read-Host 'Patron de luces o pitidos (si aplica)'
+                $resultadoCaso = Read-Host 'Pruebas realizadas y resultado'
+                $carpetaCasos = 'C:\AuditoriaRed\CasosArranque'
+                New-Item -ItemType Directory -Path $carpetaCasos -Force | Out-Null
+                $archivoCaso = Join-Path $carpetaCasos ("Caso-arranque-{0}.txt" -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
+                @(
+                    'FICHA DE TRIAGE DE ARRANQUE'
+                    ('Fecha: {0}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'))
+                    ('Fabricante: {0}' -f $marcaCaso)
+                    ('Modelo: {0}' -f $modeloCaso)
+                    ('Sintoma: {0}' -f $sintomaCaso)
+                    ('Patron de luces/pitidos: {0}' -f $codigoCaso)
+                    ('Pruebas y resultado: {0}' -f $resultadoCaso)
+                    'Nota: un codigo luminoso orienta el diagnostico y debe contrastarse con la documentacion del modelo exacto.'
+                ) | Out-File -LiteralPath $archivoCaso -Encoding UTF8
+                Write-Ok "Ficha guardada en $archivoCaso"
+            }
+            default { Write-Warn 'Opcion no valida.' }
+        }
+        if ($destino) {
+            Start-Process -FilePath $destino
+            Write-Host ''
+            Write-Info 'Compare el sintoma con la guia oficial del modelo exacto. Un codigo orienta la revision; no confirma por si solo que un componente este dañado.'
+        }
+        Write-Pausar
+    }
+}
+
 $opciones = [ordered]@{
     '1'  = @{ Icon = '[1]'; Label = 'Revision preventiva rapida'; Desc = '(5 min - Estado general, red basica y hardware)'; Params = @{ Modo = 'Rapido'; AutoEliminarAlCerrar = $true } }
     '2'  = @{ Icon = '[2]'; Label = 'Limpieza segura'; Desc = '(Temporales, cache y accesos directos rotos; confirma antes de borrar)'; Params = @{ Modo = 'Limpieza'; AutoEliminarAlCerrar = $true } }
@@ -125,12 +208,14 @@ $opciones = [ordered]@{
     '10' = @{ Icon = '[10]'; Label = 'Comparar auditorias'; Desc = '(Procesos, puertos, servicios y DNS)'; Params = $null }
     '11' = @{ Icon = '[11]'; Label = 'Estado de licencias'; Desc = '(Consulta licencias de Windows y productos Microsoft)'; Params = @{ MostrarLicencias = $true; AutoEliminarAlCerrar = $true } }
     '12' = @{ Icon = '[12]'; Label = 'Rendimiento de Windows'; Desc = '(Informe persistente: inicio, memoria, discos y almacenamiento)'; Params = @{ Modo = 'Rapido'; DuracionMinutos = 5 } }
+    '13' = @{ Icon = '[13]'; Label = 'Reparacion de arranque'; Desc = '(UEFI y codigos luminosos Dell/HP; guias oficiales)'; Params = $null }
 }
 
 $categorias = [ordered]@{
     'MANTENIMIENTO PREVENTIVO' = @('1', '2', '3', '4', '12')
     'MANTENIMIENTO CORRECTIVO' = @('5', '6', '7')
     'AUDITORIA Y REVISION' = @('8', '9', '10', '11')
+    'ARRANQUE Y DIAGNOSTICO DE HARDWARE' = @('13')
 }
 
 while ($true) {
@@ -164,7 +249,7 @@ while ($true) {
     Write-Linea -c '-' -col DarkCyan
     Write-Host ''
     Write-Info 'Los procesos muestran una confirmacion antes de ejecutarse.'
-    Write-Info 'Las evidencias temporales se eliminan al confirmar la salida de cada proceso.'
+    Write-Info 'Rendimiento conserva su informe en C:\AuditoriaRed; las demas opciones temporales indican cuando se borraran sus evidencias.'
     Write-Host ''
 
     Write-Host '  Seleccione una opcion: ' -NoNewline -ForegroundColor Cyan
@@ -180,6 +265,11 @@ while ($true) {
 
     if ($opciones.Contains($opc)) {
         $sel = $opciones[$opc]
+
+        if ($opc -eq '13') {
+            Show-StartupRepairSubmenu
+            continue
+        }
 
         if ($opc -eq '10') {
             $carpetaSalida = 'C:\AuditoriaRed'
@@ -252,7 +342,7 @@ while ($true) {
     }
     else {
         Write-Host ''
-        Write-Warn ('"{0}" no es una opcion valida. Ingrese un numero del 1 al 11, o 0 para salir.' -f $opc)
+        Write-Warn ('"{0}" no es una opcion valida. Ingrese un numero del 1 al 13, o 0 para salir.' -f $opc)
         Write-Pausar
     }
 }

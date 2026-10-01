@@ -106,6 +106,12 @@ Extra switches available on `Auditar-Trafico.ps1`:
   health, last boot time, and active power plan. It is read-only, stores its
   report persistently under `C:\AuditoriaRed`, and recommendations do not
   disable startup entries or services or change the power plan.
+- Menu option `13`, `Reparación de arranque`: opens the bundled UEFI repair
+  guide only for systems that pass POST but cannot load Windows. It offers
+  symptom triage for no power, POST failure, Windows boot failure, and no video,
+  opens official Dell/HP guidance, and can save a local case note under
+  `C:\AuditoriaRed\CasosArranque`. Do not collect serial numbers. LED/beep
+  codes are model-specific; never diagnose a failed CPU from a generic pattern.
 - `-AutoEliminarAlCerrar`: writes evidence to `%TEMP%` instead of
   `C:\AuditoriaRed`, opens the HTML report automatically, and deletes the
   temporary evidence folder only after the user presses a key to exit.

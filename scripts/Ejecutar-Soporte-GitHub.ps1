@@ -24,6 +24,10 @@ $archivos = @(
         Url    = "$repoRawBase/scripts/Ejecutar-Soporte.cmd"
     },
     [pscustomobject]@{
+        Nombre = 'Comandos_Paso_a_Paso_Reparacion_Arranque_UEFI.pdf'
+        Url    = "$repoRawBase/Comandos_Paso_a_Paso_Reparacion_Arranque_UEFI.pdf"
+    },
+    [pscustomobject]@{
         Nombre = 'office\setup.exe'
         Url    = "$repoRawBase/office/setup.exe"
     },
