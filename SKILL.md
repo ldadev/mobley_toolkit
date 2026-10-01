@@ -112,6 +112,18 @@ Extra switches available on `Auditar-Trafico.ps1`:
   opens official Dell/HP guidance, and can save a local case note under
   `C:\AuditoriaRed\CasosArranque`. Do not collect serial numbers. LED/beep
   codes are model-specific; never diagnose a failed CPU from a generic pattern.
+- Menu option `14`, `Orientación de periféricos`: provides safe-first checklists
+  for printers, displays, keyboards, and mice; shows available Windows printer
+  and PnP inventory; opens relevant Windows Settings pages; and can save a
+  local case note under `C:\AuditoriaRed\CasosPerifericos`. It must not clear
+  print queues or reinstall drivers automatically. Symptom guidance must label
+  causes as possibilities, include simple isolation checks, and avoid claiming a
+  confirmed diagnosis from symptoms alone.
+- Menu option `15`, `Fuente, memoria y cableado`: provides safe-first guidance
+  for PSU/adapter symptoms, Ethernet link issues, and suspected RAM faults. It
+  may show read-only network commands and official diagnostic guidance, but
+  must never instruct users to open a PSU or manipulate powered components. It
+  can save case notes under `C:\AuditoriaRed\CasosHardwareRed` without serials.
 - `-AutoEliminarAlCerrar`: writes evidence to `%TEMP%` instead of
   `C:\AuditoriaRed`, opens the HTML report automatically, and deletes the
   temporary evidence folder only after the user presses a key to exit.

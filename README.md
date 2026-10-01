@@ -186,6 +186,22 @@ marca, modelo, síntoma, patrón y resultado localmente en
 luces y pitidos dependen del modelo y orientan el diagnóstico; no confirman por
 sí solos una avería de CPU ni la reparan desde Windows.
 
+La opción **Orientación de periféricos** presenta listas de revisión para
+impresoras, monitores, teclados y mouse. Para impresoras muestra el inventario
+que Windows publica y abre Configuración; para monitor, teclado y mouse intenta
+mostrar el estado PnP disponible y abre el ajuste correspondiente. También
+permite guardar una ficha con conexión, síntoma y comprobaciones en
+`C:\AuditoriaRed\CasosPerifericos`. Incluye casos como líneas en pantalla,
+impresión sin conexión o con rayas, teclas que no responden y cursor errático,
+con causas posibles, pruebas de aislamiento e interpretación. Son hipótesis,
+no diagnósticos confirmados. No vacía colas ni reinstala controladores.
+
+La opción **Fuente, memoria y cableado** orienta sobre falta de energía,
+conexiones Ethernet y posibles fallas de RAM. Incluye consultas de red de solo
+lectura y abre documentación de fabricante para pruebas específicas. No indica
+abrir fuentes ni manipular memoria energizada; permite guardar una ficha local
+en `C:\AuditoriaRed\CasosHardwareRed`.
+
 ## Documentación adicional
 
 - [Guía de uso](references/USAGE.md)
