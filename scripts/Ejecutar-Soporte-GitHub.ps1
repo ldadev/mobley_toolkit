@@ -22,6 +22,14 @@ $archivos = @(
     [pscustomobject]@{
         Nombre = 'Ejecutar-Soporte.cmd'
         Url    = "$repoRawBase/scripts/Ejecutar-Soporte.cmd"
+    },
+    [pscustomobject]@{
+        Nombre = 'office\setup.exe'
+        Url    = "$repoRawBase/office/setup.exe"
+    },
+    [pscustomobject]@{
+        Nombre = 'office\configuration-Office-x64.xml'
+        Url    = "$repoRawBase/office/configuration-Office-x64.xml"
     }
 )
 
@@ -30,6 +38,10 @@ New-Item -ItemType Directory -Path $destino -Force | Out-Null
 foreach ($archivo in $archivos) {
     $url = $archivo.Url
     $ruta = Join-Path $destino $archivo.Nombre
+    $directorioArchivo = Split-Path -Parent $ruta
+    if (-not (Test-Path -LiteralPath $directorioArchivo)) {
+        New-Item -ItemType Directory -Path $directorioArchivo -Force | Out-Null
+    }
 
     Write-Host "Descargando $($archivo.Nombre) desde GitHub..." -ForegroundColor Cyan
     Invoke-WebRequest -Uri $url -OutFile $ruta -UseBasicParsing
@@ -38,10 +50,19 @@ foreach ($archivo in $archivos) {
         throw "GitHub no entrego correctamente $($archivo.Nombre)."
     }
 
-    $inicioArchivo = Get-Content $ruta -TotalCount 5 -ErrorAction Stop
-    if (($inicioArchivo -join ' ') -match '<!DOCTYPE|<html|404: Not Found') {
-        Remove-Item -LiteralPath $ruta -Force
-        throw "GitHub devolvio un error o pagina web en lugar de $($archivo.Nombre). Verifique la URL raw."
+    if ([IO.Path]::GetExtension($ruta) -ieq '.exe') {
+        $bytesArchivo = [IO.File]::ReadAllBytes($ruta)
+        if ($bytesArchivo.Length -lt 2 -or $bytesArchivo[0] -ne 0x4D -or $bytesArchivo[1] -ne 0x5A) {
+            Remove-Item -LiteralPath $ruta -Force
+            throw "GitHub no devolvio un ejecutable valido para $($archivo.Nombre). Verifique la URL raw."
+        }
+    }
+    else {
+        $inicioArchivo = Get-Content $ruta -TotalCount 5 -ErrorAction Stop
+        if (($inicioArchivo -join ' ') -match '<!DOCTYPE|<html|404: Not Found') {
+            Remove-Item -LiteralPath $ruta -Force
+            throw "GitHub devolvio un error o pagina web en lugar de $($archivo.Nombre). Verifique la URL raw."
+        }
     }
 }
 

@@ -86,16 +86,26 @@ function Start-CleanupDownloadedToolkit {
 }
 
 function Install-OfficeToolkit {
-    $directorioRaiz = Split-Path -Parent $PSScriptRoot
-    $instalador = Join-Path $directorioRaiz 'office\setup.exe'
-    $configuracion = Join-Path $directorioRaiz 'office\configuration-Office-x64.xml'
-
-    if (-not (Test-Path -LiteralPath $instalador) -or -not (Test-Path -LiteralPath $configuracion)) {
-        throw 'No se encontraron office\setup.exe y office\configuration-Office-x64.xml. Use la copia completa del toolkit.'
+    $raicesPosibles = @($PSScriptRoot, (Split-Path -Parent $PSScriptRoot))
+    $directorioOffice = $null
+    foreach ($raiz in $raicesPosibles) {
+        $candidato = Join-Path $raiz 'office'
+        if ((Test-Path -LiteralPath (Join-Path $candidato 'setup.exe')) -and
+            (Test-Path -LiteralPath (Join-Path $candidato 'configuration-Office-x64.xml'))) {
+            $directorioOffice = $candidato
+            break
+        }
     }
 
+    if (-not $directorioOffice) {
+        throw 'No se encontraron los archivos de Office. Vuelva a iniciar el menú con conexión a Internet o use el paquete completo del toolkit.'
+    }
+
+    $instalador = Join-Path $directorioOffice 'setup.exe'
+    $configuracion = Join-Path $directorioOffice 'configuration-Office-x64.xml'
     Write-Info 'Iniciando instalacion de Office con la configuracion incluida...'
-    $proceso = Start-Process -FilePath $instalador -WorkingDirectory (Split-Path -Parent $instalador) -ArgumentList @('/configure', $configuracion) -Wait -PassThru
+    $argumentos = '/configure "{0}"' -f $configuracion
+    $proceso = Start-Process -FilePath $instalador -WorkingDirectory $directorioOffice -ArgumentList $argumentos -Wait -PassThru
     if ($proceso.ExitCode -ne 0) {
         throw "El instalador de Office termino con codigo $($proceso.ExitCode)."
     }
